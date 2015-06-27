@@ -4,22 +4,26 @@
   gather_facts: False
 
   tasks:
-   - name: Provision a set of instances
-     ec2:
+  - name: Provision a set of instances
+    ec2:
        region: us-west-2 
-       group: launch-wizard-1
+       group: ssh
        instance_type: t2.micro
        image: ami-e7527ed7
        wait: true
-       exact_count: 2
+       exact_count: 1
        count_tag:
          Name: Demo
        instance_tags:
          Name: aws_ansible
-     register: ec2
-   - name: Add all instance public IPs to host group
-     add_host: hostname={{ item.public_ip }} groups=ec2hosts
-     with_items: ec2.instances
+       key_name: oregon
+    register: ec2
+  - name: Add all instance public IPs to host group
+    add_host: hostname={{ item.public_ip }} groups=ec2hosts
+    with_items: ec2.instances
+  - name: Wait for SSH to come up
+    wait_for: host={{ item.public_ip }} port=22 delay=60 timeout=320 state=started
+    with_items: ec2.instances
 
 - hosts: ec2hosts
   name: configuration play
